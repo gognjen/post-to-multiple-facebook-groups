@@ -18,32 +18,21 @@
   </head>
   <body>
 <script>
-
-    function login(){
-        FB.login(function(response){
-          statusChangeCallback(response)
-        });
-    };
+   
     // This is called with the results from from FB.getLoginStatus().
-    function statusChangeCallback(response) {
-        console.log('statusChangeCallback');
-        console.log(response);
+    function statusChangeCallback(response) {        
         // The response object is returned with a status field that lets the
         // app know the current login status of the person.
         // Full docs on the response object can be found in the documentation
         // for FB.getLoginStatus().
         if (response.status === 'connected') {
             // Logged into your app and Facebook.
-            testAPI();
+            getGroups();
         } else if (response.status === 'not_authorized') {
-            // The person is logged into Facebook, but not your app.
-            document.getElementById('status').innerHTML = 'Please log ' +
-                'into this app.';
+            // The person is logged into Facebook, but not your app.            
         } else {
             // The person is not logged into Facebook, so we're not sure if
             // they are logged into this app or not.
-            document.getElementById('status').innerHTML = 'Please log ' +
-                'into Facebook.';
         }
     }
 
@@ -58,7 +47,7 @@
 
     window.fbAsyncInit = function() {
         FB.init({
-            appId: "777029765642866",
+            appId: "Put your App ID here",
             cookie: true, // enable cookies to allow the server to access 
             // the session
             xfbml: true, // parse social plugins on this page
@@ -95,54 +84,55 @@
 
     // Here we run a very simple test of the Graph API after login is
     // successful.  See statusChangeCallback() for when this call is made.
-    function testAPI() {
+    function getGroups() {
         console.log('Welcome!  Fetching your information.... ');
         FB.api('/me/groups', function(response) {
-            var newSelect = document.getElementById('groups');
+            var groupList = document.getElementById('groups');
             response.data.forEach(function(group) {
                 console.log(group.name);
                 var opt = document.createElement("option");
                 opt.value = group.id;
                 opt.innerHTML = group.name; // whatever property it has          
                 // then append it to the select element
-                newSelect.appendChild(opt);
+                groupList.appendChild(opt);
             });
-        },{scope: 'user_groups,publish_actions'});
+        }, {scope: 'user_groups,publish_actions'});
     }
 
     function postToGroups() {
-        var newSelect = document.getElementById('groups');        
+        var groupList = document.getElementById('groups');        
         
-        var que = []
+        var selectedGroups = []
         
-        for (var i = 0; i < newSelect.length; i++) {
-            if (newSelect[i].selected) {
-                que.push(newSelect[i].value);
+        for (var i = 0; i < groupList.length; i++) {
+            if (groupList[i].selected) {
+                selectedGroups.push(groupList[i].value);
             }
         }
 
         var delay = parseInt(document.getElementById("delay").value, 10) * 1000;       
-        alert(delay);
+
         function postOrFinish(){
-            if(que.length > 0){
-                var id = que.pop();
-                
-                
+            if(selectedGroups.length > 0){
+                var groupId = selectedGroups.pop();                
+                var message = document.getElementById("message").value;
+                var link = document.getElementById("link").value;
                 FB.api(
-                    "/" + id + "/feed",
+                    "/" + groupId + "/feed",
                     "POST", {
-                        "message": document.getElementById("message").value,
-                        "link": document.getElementById("link").value
+                        "message": message,
+                        "link": link
                     },                              
                     function(response) {
-                        console.log(response.error);                                   
+                        if(response.error){
+                            console.log(response.error);                                   
+                        }
                         setTimeout(postOrFinish, delay);
                     });
             }
             else
             {
-               console.log('done')
-               alert('done!');
+               alert('All done!');
             }
         }       
                 
@@ -160,7 +150,7 @@
       </div>
     </div>
     <div class="form-group">
-      <label for="textArea" class="col-lg-2 control-label">Message</label>
+      <label for="message" class="col-lg-2 control-label">Message</label>
       <div class="col-lg-10">
         <textarea class="form-control" rows="3" placeholder="Type your message here." id="message"></textarea>        
       </div>
@@ -173,7 +163,7 @@
     </div>
     
     <div class="form-group">
-      <label for="select" class="col-lg-2 control-label">Groups</label>
+      <label for="groups" class="col-lg-2 control-label">Groups</label>
       <div class="col-lg-10">
         <select multiple="" class="form-control" id="groups">
         </select>
@@ -181,9 +171,9 @@
       </div>
     </div>
     <div class="form-group">
-      <label for="link" class="col-lg-2 control-label">Delay</label>
+      <label for="delay" class="col-lg-2 control-label">Delay</label>
       <div class="col-lg-10">
-        <input type="text" class="form-control" id="delay">        
+        <input type="text" value="10" class="form-control" id="delay">        
         <span class="help-block">Number of second between two requests.</span>
       </div>
     </div>
